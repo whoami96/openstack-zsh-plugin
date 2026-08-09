@@ -71,6 +71,11 @@ op_prompt_info() {
 
 # --- 7. Activate OpenStack VirtualEnv & Select Cloud ---
 openv() {
+    if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+        ophelp
+        return 0
+    fi
+
     local OS_VENV="$HOME/.config/openstack/.venv"
     local target_cloud="$1"
     local selected_cloud=""
@@ -178,6 +183,83 @@ opls() {
     python3 "$_openstack_plugin_helper" list-table 2>/dev/null
 }
 alias opclouds='opls'
+
+# --- Cheatsheet of commands & aliases (also: openv --help / openv -h) ---
+_ophelp_row() {
+    printf "  \033[1;32m%-38s\033[0m %s\n" "$1" "$2"
+}
+
+ophelp() {
+    local CYAN=$'\033[1;36m' YELLOW=$'\033[1;33m' MAGENTA=$'\033[1;35m'
+    local BOLD=$'\033[1m' DIM=$'\033[2m' RESET=$'\033[0m'
+
+    echo "${CYAN}${BOLD}󱇩 openstack-zsh-plugin — command reference${RESET}"
+    echo "${DIM}$(printf '─%.0s' {1..64})${RESET}"
+
+    echo
+    echo "${YELLOW}${BOLD}Cloud Management${RESET}"
+    _ophelp_row "openv [cloud]"             "Select/activate an OpenStack cloud (fzf or direct)"
+    _ophelp_row "openv --help"              "Show this help"
+    _ophelp_row "opexit / opoff / opclear"  "Deactivate venv and clear OS_CLOUD"
+    _ophelp_row "opwho / opstatus"          "Show active cloud, user, project, auth URL"
+    _ophelp_row "opls / opclouds"           "List all configured clouds"
+    _ophelp_row "opcheck"                   "Verify the active cloud's token/credentials"
+
+    echo
+    echo "${YELLOW}${BOLD}Interactive VM Helpers${RESET}"
+    _ophelp_row "ops-ssh [user] [-i key] [--insecure]" "Pick a VM via fzf and SSH into it"
+    _ophelp_row "ops-console"                          "Pick a VM via fzf and open its VNC console"
+
+    echo
+    echo "${YELLOW}${BOLD}Aliases${RESET}"
+    _ophelp_row "op" "openstack"
+
+    echo
+    echo "  ${MAGENTA}Compute (Nova)${RESET}"
+    _ophelp_row "ops"    "openstack server list"
+    _ophelp_row "opsa"   "openstack server list --all-projects"
+    _ophelp_row "opss"   "openstack server show"
+    _ophelp_row "opsr"   "openstack server reboot"
+    _ophelp_row "opsh"   "openstack server stop"
+    _ophelp_row "opst"   "openstack server start"
+    _ophelp_row "opsdel" "openstack server delete"
+    _ophelp_row "oplog"  "openstack console log show"
+
+    echo
+    echo "  ${MAGENTA}Networking & Security (Neutron)${RESET}"
+    _ophelp_row "opnet"       "openstack network list"
+    _ophelp_row "opsub"       "openstack subnet list"
+    _ophelp_row "oprtr"       "openstack router list"
+    _ophelp_row "opfip, opip" "openstack floating ip list"
+    _ophelp_row "opsec"       "openstack security group list"
+    _ophelp_row "opsecr"      "openstack security group rule list"
+    _ophelp_row "opport"      "openstack port list"
+
+    echo
+    echo "  ${MAGENTA}Storage & Images (Cinder / Glance)${RESET}"
+    _ophelp_row "opvol"  "openstack volume list"
+    _ophelp_row "opvola" "openstack volume list --all-projects"
+    _ophelp_row "opsnap" "openstack volume snapshot list"
+    _ophelp_row "opimg"  "openstack image list"
+
+    echo
+    echo "  ${MAGENTA}Identity & Quotas (Keystone)${RESET}"
+    _ophelp_row "opproj"  "openstack project list"
+    _ophelp_row "opuser"  "openstack user list"
+    _ophelp_row "oprole"  "openstack role list"
+    _ophelp_row "optoken" "openstack token issue"
+    _ophelp_row "opfl"    "openstack flavor list"
+    _ophelp_row "opkey"   "openstack keypair list"
+    _ophelp_row "oplim"   "openstack limits show --absolute"
+
+    echo
+    echo "  ${MAGENTA}Load Balancers & Kubernetes (Octavia & Magnum)${RESET}"
+    _ophelp_row "oplb"         "openstack loadbalancer list"
+    _ophelp_row "opk8s, opcoe" "openstack coe cluster list"
+
+    echo
+    echo "${DIM}Full docs: README.md${RESET}"
+}
 
 # --- Interactive SSH into OpenStack VMs via fzf ---
 # Usage: ops-ssh [user] [-i identity_file] [--insecure]
