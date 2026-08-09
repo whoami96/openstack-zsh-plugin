@@ -92,9 +92,14 @@ def main():
         cloud = clouds.get(cloud_name, {})
         auth = cloud.get("auth", {})
 
-        CYAN = "\033[1;36m"; YELLOW = "\033[1;33m"; GREEN = "\033[1;32m"
-        BLUE = "\033[1;34m"; MAGENTA = "\033[1;35m"; RESET = "\033[0m"
-        BOLD = "\033[1m"; DIM = "\033[2m"
+        CYAN = "\033[1;36m"
+        YELLOW = "\033[1;33m"
+        GREEN = "\033[1;32m"
+        BLUE = "\033[1;34m"
+        MAGENTA = "\033[1;35m"
+        RESET = "\033[0m"
+        BOLD = "\033[1m"
+        DIM = "\033[2m"
 
         auth_url = auth.get("auth_url", "N/A")
         project = auth.get("project_name", auth.get("project_domain_name", "N/A"))

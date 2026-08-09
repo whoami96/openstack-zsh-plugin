@@ -165,7 +165,8 @@ openv() {
     # 1. Select cloud FIRST (via argument or interactively through fzf)
     if [[ -n "$target_cloud" ]]; then
         # Safe check using sys.argv[2] in helper script (prevents code injection)
-        local exists=$(python3 "$_openstack_plugin_helper" check-key "$target_cloud" 2>/dev/null)
+        local exists
+        exists=$(python3 "$_openstack_plugin_helper" check-key "$target_cloud" 2>/dev/null)
         if [[ "$exists" == "True" ]]; then
             selected_cloud="$target_cloud"
         else
@@ -212,6 +213,11 @@ openv() {
 # --- Zsh autocompletion for openv <TAB> ---
 _openv_complete() {
     local -a clouds
+    # shellcheck disable=SC2034,SC2207
+    # zsh-only: `clouds` is consumed by the zsh builtin `_describe` (not a
+    # direct reference shellcheck can see), and zsh's `arr=($(...))` splits
+    # on IFS in array-assignment context by default, unlike bash — the
+    # mapfile/read -a suggestion doesn't apply here.
     clouds=($(python3 "$_openstack_plugin_helper" list-keys 2>/dev/null))
     _describe 'OpenStack Cloud' clouds
 }
@@ -342,7 +348,8 @@ except Exception as e:
 " <<< "$raw_json" | fzf --height 50% --reverse --cycle --border rounded --prompt="󰢹 Select Server to SSH (${ssh_user}@...): ")
 
     if [[ -n "$selected" ]]; then
-        local target_ip=$(echo "$selected" | awk -F'|' '{print $3}' | xargs)
+        local target_ip
+        target_ip=$(echo "$selected" | awk -F'|' '{print $3}' | xargs)
         if [[ "$target_ip" != "No-IP" && -n "$target_ip" ]]; then
             if [[ -n "$identity_file" ]]; then
                 ssh_opts+=(-i "$identity_file" -o IdentitiesOnly=yes)
@@ -399,9 +406,11 @@ except Exception as e:
 " <<< "$raw_json" | fzf --height 50% --reverse --cycle --border rounded --prompt="󰢹 Select Server for Console URL: ")
 
     if [[ -n "$selected" ]]; then
-        local server_name=$(echo "$selected" | awk -F'|' '{print $1}' | xargs)
+        local server_name
+        server_name=$(echo "$selected" | awk -F'|' '{print $1}' | xargs)
         echo "🌐 Fetching VNC console URL for ${server_name}..."
-        local console_url=$(openstack console url show "$server_name" -f value -c url 2>/dev/null)
+        local console_url
+        console_url=$(openstack console url show "$server_name" -f value -c url 2>/dev/null)
         if [[ -n "$console_url" ]]; then
             echo ""
             echo "🔗 Console URL: $console_url"
