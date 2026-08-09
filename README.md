@@ -11,12 +11,25 @@ An interactive, feature-rich **Oh My Zsh** plugin for managing **OpenStack** CLI
 ## ✨ Features
 
 - ⚡ **Interactive Cloud Selector (`openv`)**: Browse and activate OpenStack clouds defined in `~/.config/openstack/clouds.yaml` via `fzf` with live ANSI card preview.
-- 🔒 **Password Masking**: Strips sensitive passwords/secrets from the preview window automatically.
+- 🔒 **No Secrets in Preview**: The `fzf` preview card only ever reads and prints non-sensitive fields (auth URL, project, username, region) — it never touches `password` or secret fields from `clouds.yaml`.
 - 🎯 **Tab Completion**: Auto-completes `openv <cloud_name>` directly in your shell.
 - 🚀 **Interactive SSH (`ops-ssh`)**: Select OpenStack VMs interactively with `fzf` and SSH straight into them.
 - 🌐 **VNC Console Launcher (`ops-console`)**: Generate VNC console URLs and open them directly in your browser.
 - 📊 **Status & Summary (`opwho`, `opls`)**: Display active cloud connection status or list all configured clouds in a clean ASCII table.
 - 🛠️ **Comprehensive Aliases**: Over 20+ short aliases for Nova, Neutron, Cinder, Keystone, Glance, Octavia, and Magnum.
+
+---
+
+## ✅ Requirements
+
+- **zsh** with [Oh My Zsh](https://ohmyz.sh/)
+- **python3** with the [`PyYAML`](https://pypi.org/project/PyYAML/) package installed (`pip install pyyaml`)
+- **[fzf](https://github.com/junegunn/fzf)** for the interactive selectors (`openv`, `ops-ssh`, `ops-console`)
+- **[python-openstackclient](https://docs.openstack.org/python-openstackclient/)** (the `openstack` CLI) configured with a `clouds.yaml` (default: `~/.config/openstack/clouds.yaml`, or set `OS_CLIENT_CONFIG_FILE`)
+- **ssh** on `PATH` for `ops-ssh`
+- A **[Nerd Font](https://www.nerdfonts.com/)** in your terminal — several icons in the output (`󱇩`, `󰢹`, `󱄊`, ...) are Nerd Font glyphs and render as boxes/question marks without one
+
+The plugin checks for `python3`, `PyYAML`, and `fzf` on load and prints a warning if any are missing.
 
 ---
 
@@ -58,12 +71,13 @@ source ~/.zshrc
 | **`opexit`** / `opoff` / `opclear` | Deactivate virtualenv and clear `OS_CLOUD` environment variable |
 | **`opwho`** / `opstatus` | Display current active OpenStack cloud, user, project, and auth URL |
 | **`opls`** / `opclouds` | List all configured OpenStack clouds in `clouds.yaml` |
+| **`opcheck`** | Quick health check — verifies the active cloud's token/credentials are still valid |
 
 ### Interactive VM Helpers
 
 | Command | Description |
 | :--- | :--- |
-| **`ops-ssh [user]`** | Pick an OpenStack VM via `fzf` and connect via SSH (default user: `ubuntu`) |
+| **`ops-ssh [user] [-i identity_file] [--insecure]`** | Pick an OpenStack VM via `fzf` and connect via SSH (default user: `ubuntu`). `-i` selects a specific keypair file; `--insecure` skips host key verification — handy for ephemeral cloud VMs whose floating IP gets reused |
 | **`ops-console`** | Pick an OpenStack VM via `fzf` and open its Horizon VNC console in browser |
 
 ### Shortcuts & Aliases

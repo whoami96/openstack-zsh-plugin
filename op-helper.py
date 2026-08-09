@@ -7,7 +7,12 @@
 
 import sys
 import os
+import json
 import yaml
+
+XDG_CACHE_HOME = os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache")
+CACHE_DIR = os.path.join(XDG_CACHE_HOME, "openstack-zsh-plugin")
+CACHE_FILE = os.path.join(CACHE_DIR, "clouds_cache.json")
 
 def get_config_path():
     """Resolves OpenStack clouds.yaml path following standard precedence."""
@@ -25,17 +30,47 @@ def get_config_path():
             return path
     return os.path.expanduser("~/.config/openstack/clouds.yaml")
 
+def _read_cache(path, mtime):
+    """Returns cached clouds dict if the cache matches the source file's path+mtime."""
+    try:
+        with open(CACHE_FILE) as f:
+            cache = json.load(f)
+        if cache.get("source") == path and cache.get("mtime") == mtime:
+            return cache.get("clouds", {})
+    except Exception:
+        pass
+    return None
+
+def _write_cache(path, mtime, clouds):
+    """Writes the cache with owner-only permissions (clouds.yaml may hold secrets)."""
+    try:
+        os.makedirs(CACHE_DIR, mode=0o700, exist_ok=True)
+        fd = os.open(CACHE_FILE, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w") as f:
+            json.dump({"source": path, "mtime": mtime, "clouds": clouds}, f)
+    except Exception:
+        pass
+
 def load_clouds():
-    """Loads and parses OpenStack clouds configuration safely."""
+    """Loads and parses OpenStack clouds configuration, cached by source mtime."""
     path = get_config_path()
     if not os.path.isfile(path):
         return {}
+
+    mtime = os.path.getmtime(path)
+    cached = _read_cache(path, mtime)
+    if cached is not None:
+        return cached
+
     try:
         with open(path) as f:
             data = yaml.safe_load(f)
-        return data.get("clouds", {})
+        clouds = data.get("clouds", {})
     except Exception:
         return {}
+
+    _write_cache(path, mtime, clouds)
+    return clouds
 
 def main():
     cmd = sys.argv[1] if len(sys.argv) > 1 else ""

@@ -7,7 +7,17 @@
 alias op='openstack'
 
 # --- Resolve helper script path ---
-_op_helper="${0:A:h}/op-helper.py"
+_openstack_plugin_helper="${0:A:h}/op-helper.py"
+
+# --- Dependency checks (run once when the plugin loads) ---
+if ! command -v python3 >/dev/null 2>&1; then
+    print -u2 "⚠️  openstack-zsh-plugin: python3 not found — most commands will not work."
+elif ! python3 -c "import yaml" >/dev/null 2>&1; then
+    print -u2 "⚠️  openstack-zsh-plugin: PyYAML not installed — run 'pip install pyyaml' (in the venv used by this plugin)."
+fi
+if ! command -v fzf >/dev/null 2>&1; then
+    print -u2 "⚠️  openstack-zsh-plugin: fzf not found — interactive selectors (openv, ops-ssh, ops-console) will not work."
+fi
 
 # --- 1. Compute & Server Aliases (Nova) ---
 alias ops='openstack server list'
@@ -65,7 +75,7 @@ openv() {
     # 1. Select cloud FIRST (via argument or interactively through fzf)
     if [[ -n "$target_cloud" ]]; then
         # Safe check using sys.argv[2] in helper script (prevents code injection)
-        local exists=$(python3 "$_op_helper" check-key "$target_cloud" 2>/dev/null)
+        local exists=$(python3 "$_openstack_plugin_helper" check-key "$target_cloud" 2>/dev/null)
         if [[ "$exists" == "True" ]]; then
             selected_cloud="$target_cloud"
         else
@@ -73,10 +83,10 @@ openv() {
             return 1
         fi
     else
-        selected_cloud=$(python3 "$_op_helper" list-keys 2>/dev/null | \
+        selected_cloud=$(python3 "$_openstack_plugin_helper" list-keys 2>/dev/null | \
             fzf --height 60% --reverse --cycle --border rounded \
                 --prompt="󱇩 Select OpenStack Cloud: " \
-                --preview "python3 '$_op_helper' preview {}" \
+                --preview "python3 '$_openstack_plugin_helper' preview {}" \
                 --preview-window=right:55%)
     fi
 
@@ -112,7 +122,7 @@ openv() {
 # --- Zsh autocompletion for openv <TAB> ---
 _openv_complete() {
     local -a clouds
-    clouds=($(python3 "$_op_helper" list-keys 2>/dev/null))
+    clouds=($(python3 "$_openstack_plugin_helper" list-keys 2>/dev/null))
     _describe 'OpenStack Cloud' clouds
 }
 compdef _openv_complete openv 2>/dev/null
@@ -139,31 +149,80 @@ opwho() {
     echo "🐍 Active Venv   : ${VIRTUAL_ENV:-None}"
     echo ""
 
-    python3 "$_op_helper" who "$OS_CLOUD" 2>/dev/null
+    python3 "$_openstack_plugin_helper" who "$OS_CLOUD" 2>/dev/null
 }
 alias opstatus='opwho'
 
+# --- Quick auth/connectivity health check for the active cloud ---
+opcheck() {
+    if [[ -z "$OS_CLOUD" ]]; then
+        echo "⚠️  No active OS_CLOUD set. Run: openv"
+        return 1
+    fi
+
+    echo "󱇩 Checking OpenStack authentication for '$OS_CLOUD'..."
+    if openstack token issue >/dev/null 2>&1; then
+        echo "✅ Token is valid — authenticated as cloud '$OS_CLOUD'."
+    else
+        echo "❌ Authentication failed for '$OS_CLOUD' — token may be expired or credentials invalid."
+        echo "   Try: openv $OS_CLOUD"
+        return 1
+    fi
+}
+
 # --- List all configured OpenStack clouds ---
 opls() {
-    python3 "$_op_helper" list-table 2>/dev/null
+    python3 "$_openstack_plugin_helper" list-table 2>/dev/null
 }
 alias opclouds='opls'
 
 # --- Interactive SSH into OpenStack VMs via fzf ---
+# Usage: ops-ssh [user] [-i identity_file] [--insecure]
 ops-ssh() {
     if [[ -z "$OS_CLOUD" ]]; then
         echo "⚠️  No active OS_CLOUD set. Run: openv"
         return 1
     fi
 
-    local ssh_user="${1:-ubuntu}"
+    local ssh_user="ubuntu"
+    local identity_file=""
+    local insecure=0
+    local -a ssh_opts=()
+
+    while (( $# )); do
+        case "$1" in
+            -i)
+                identity_file="$2"
+                shift 2
+                ;;
+            --insecure)
+                insecure=1
+                shift
+                ;;
+            -*)
+                echo "⚠️  Unknown option: $1"
+                return 1
+                ;;
+            *)
+                ssh_user="$1"
+                shift
+                ;;
+        esac
+    done
+
     echo "󰢹 Fetching server list from OpenStack ($OS_CLOUD)..."
 
     local raw_json
     raw_json=$(openstack server list --format json 2>/dev/null)
+    local os_exit=$?
+
+    if (( os_exit != 0 )); then
+        echo "⚠️  Failed to run 'openstack server list' (exit $os_exit). Is the CLI installed and are you authenticated? Try: opcheck"
+        return 1
+    fi
 
     if [[ -z "$raw_json" || "$raw_json" == "[]" ]]; then
-        echo "⚠️  No servers found in project or failed to fetch server list."
+        echo "⚠️  No servers found in this project."
         return 1
     fi
 
@@ -190,8 +249,13 @@ except Exception as e:
     if [[ -n "$selected" ]]; then
         local target_ip=$(echo "$selected" | awk -F'|' '{print $3}' | xargs)
         if [[ "$target_ip" != "No-IP" && -n "$target_ip" ]]; then
+            [[ -n "$identity_file" ]] && ssh_opts+=(-i "$identity_file")
+            if (( insecure )); then
+                echo "⚠️  --insecure: skipping SSH host key verification (fine for ephemeral cloud VMs, risky elsewhere)."
+                ssh_opts+=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null)
+            fi
             echo "🚀 Connecting to ${ssh_user}@${target_ip}..."
-            ssh "${ssh_user}@${target_ip}"
+            ssh "${ssh_opts[@]}" "${ssh_user}@${target_ip}"
         else
             echo "⚠️  Selected server has no IP address."
         fi
@@ -211,9 +275,15 @@ ops-console() {
 
     local raw_json
     raw_json=$(openstack server list --format json 2>/dev/null)
+    local os_exit=$?
+
+    if (( os_exit != 0 )); then
+        echo "⚠️  Failed to run 'openstack server list' (exit $os_exit). Is the CLI installed and are you authenticated? Try: opcheck"
+        return 1
+    fi
 
     if [[ -z "$raw_json" || "$raw_json" == "[]" ]]; then
-        echo "⚠️  No servers found in project."
+        echo "⚠️  No servers found in this project."
         return 1
     fi
 
