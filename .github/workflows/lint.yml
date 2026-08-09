@@ -17,5 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - name: install zsh
+        run: sudo apt-get update && sudo apt-get install -y zsh
+      - name: zsh syntax check
+        run: zsh -n openstack.plugin.zsh
       - name: shellcheck
         run: shellcheck --shell=bash --severity=warning openstack.plugin.zsh
