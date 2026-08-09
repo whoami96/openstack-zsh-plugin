@@ -82,6 +82,8 @@ source ~/.zshrc
 
 ### Shortcuts & Aliases
 
+- `op` $\rightarrow$ `openstack`
+
 #### Compute (Nova)
 - `ops` $\rightarrow$ `openstack server list`
 - `opsa` $\rightarrow$ `openstack server list --all-projects`

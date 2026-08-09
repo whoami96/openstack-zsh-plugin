@@ -18,6 +18,9 @@ fi
 if ! command -v fzf >/dev/null 2>&1; then
     print -u2 "⚠️  openstack-zsh-plugin: fzf not found — interactive selectors (openv, ops-ssh, ops-console) will not work."
 fi
+if ! command -v openstack >/dev/null 2>&1 && [[ ! -f "$HOME/.config/openstack/.venv/bin/activate" ]]; then
+    print -u2 "⚠️  openstack-zsh-plugin: 'openstack' CLI not found — install python-openstackclient, or set up the venv (openv) that is expected to provide it."
+fi
 
 # --- 1. Compute & Server Aliases (Nova) ---
 alias ops='openstack server list'

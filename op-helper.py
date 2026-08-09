@@ -19,7 +19,7 @@ def get_config_path():
     env_path = os.environ.get("OS_CLIENT_CONFIG_FILE")
     if env_path and os.path.isfile(env_path):
         return env_path
-    
+
     candidates = [
         "./clouds.yaml",
         os.path.expanduser("~/.config/openstack/clouds.yaml"),
@@ -85,10 +85,10 @@ def main():
         print("True" if target in clouds else "False")
 
     elif cmd == "preview":
-        cloud_name = target or os.environ.get("CLOUD", "")
+        cloud_name = target
         if not cloud_name:
             sys.exit(0)
-        
+
         cloud = clouds.get(cloud_name, {})
         auth = cloud.get("auth", {})
 
