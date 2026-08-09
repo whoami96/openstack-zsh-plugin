@@ -97,7 +97,7 @@ ophelp() {
 
     echo
     echo "${YELLOW}${BOLD}Interactive VM Helpers${RESET}"
-    _ophelp_row "ops-ssh [user] [-i key] [--insecure]" "Pick a VM via fzf and SSH into it"
+    _ophelp_row "ops-ssh [user] [-i key] [-p port] [--insecure]" "Pick a VM via fzf and SSH into it"
     _ophelp_row "ops-console"                          "Pick a VM via fzf and open its VNC console"
 
     echo
@@ -267,7 +267,7 @@ opls() {
 alias opclouds='opls'
 
 # --- Interactive SSH into OpenStack VMs via fzf ---
-# Usage: ops-ssh [user] [-i identity_file] [--insecure]
+# Usage: ops-ssh [user] [-i identity_file] [-p port] [--insecure]
 ops-ssh() {
     if [[ -z "$OS_CLOUD" ]]; then
         echo "⚠️  No active OS_CLOUD set. Run: openv"
@@ -276,6 +276,7 @@ ops-ssh() {
 
     local ssh_user="ubuntu"
     local identity_file=""
+    local port=""
     local insecure=0
     local -a ssh_opts=()
 
@@ -283,6 +284,10 @@ ops-ssh() {
         case "$1" in
             -i)
                 identity_file="$2"
+                shift 2
+                ;;
+            -p)
+                port="$2"
                 shift 2
                 ;;
             --insecure)
@@ -339,12 +344,15 @@ except Exception as e:
     if [[ -n "$selected" ]]; then
         local target_ip=$(echo "$selected" | awk -F'|' '{print $3}' | xargs)
         if [[ "$target_ip" != "No-IP" && -n "$target_ip" ]]; then
-            [[ -n "$identity_file" ]] && ssh_opts+=(-i "$identity_file")
+            if [[ -n "$identity_file" ]]; then
+                ssh_opts+=(-i "$identity_file" -o IdentitiesOnly=yes)
+            fi
+            [[ -n "$port" ]] && ssh_opts+=(-p "$port")
             if (( insecure )); then
                 echo "⚠️  --insecure: skipping SSH host key verification (fine for ephemeral cloud VMs, risky elsewhere)."
                 ssh_opts+=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null)
             fi
-            echo "🚀 Connecting to ${ssh_user}@${target_ip}..."
+            echo "🚀 Connecting to ${ssh_user}@${target_ip}${port:+:$port}..."
             ssh "${ssh_opts[@]}" "${ssh_user}@${target_ip}"
         else
             echo "⚠️  Selected server has no IP address."

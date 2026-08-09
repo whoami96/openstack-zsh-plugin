@@ -87,7 +87,7 @@ source ~/.zshrc
 
 | Command | Description |
 | :--- | :--- |
-| **`ops-ssh [user] [-i identity_file] [--insecure]`** | Pick an OpenStack VM via `fzf` and connect via SSH (default user: `ubuntu`). `-i` selects a specific keypair file; `--insecure` skips host key verification — handy for ephemeral cloud VMs whose floating IP gets reused |
+| **`ops-ssh [user] [-i identity_file] [-p port] [--insecure]`** | Pick an OpenStack VM via `fzf` and connect via SSH (default user: `ubuntu`). `-i` selects a specific keypair file (implies `IdentitiesOnly=yes`); `-p` sets a non-default SSH port; `--insecure` skips host key verification — handy for ephemeral cloud VMs whose floating IP gets reused |
 | **`ops-console`** | Pick an OpenStack VM via `fzf` and open its Horizon VNC console in browser |
 
 ### Shortcuts & Aliases
