@@ -5,9 +5,10 @@
 # Repository: https://github.com/whoami96/openstack-zsh-plugin
 # ==============================================================================
 
-import sys
-import os
 import json
+import os
+import sys
+
 import yaml
 
 XDG_CACHE_HOME = os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache")
@@ -37,8 +38,10 @@ def _read_cache(path, mtime):
             cache = json.load(f)
         if cache.get("source") == path and cache.get("mtime") == mtime:
             return cache.get("clouds", {})
-    except Exception:
-        pass
+    except (OSError, ValueError):
+        # Corrupt/missing cache is just a cache miss, not a real error —
+        # load_clouds() falls back to re-reading and rewriting it below.
+        pass  # noqa: S110
     return None
 
 def _write_cache(path, mtime, clouds):
@@ -48,8 +51,11 @@ def _write_cache(path, mtime, clouds):
         fd = os.open(CACHE_FILE, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
         with os.fdopen(fd, "w") as f:
             json.dump({"source": path, "mtime": mtime, "clouds": clouds}, f)
-    except Exception:
-        pass
+    except (OSError, TypeError):
+        # Best-effort cache write; a failure here (e.g. read-only fs, or a
+        # non-JSON-serializable YAML value like a date) shouldn't break
+        # cloud lookups, which don't depend on the cache existing.
+        pass  # noqa: S110
 
 def load_clouds():
     """Loads and parses OpenStack clouds configuration, cached by source mtime."""
@@ -66,7 +72,8 @@ def load_clouds():
         with open(path) as f:
             data = yaml.safe_load(f)
         clouds = data.get("clouds", {})
-    except Exception:
+    except (OSError, yaml.YAMLError) as e:
+        print(f"⚠️  Failed to read {path}: {e}", file=sys.stderr)
         return {}
 
     _write_cache(path, mtime, clouds)

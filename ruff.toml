@@ -3,4 +3,4 @@
 # stable across versions (0.15 -> 0.16 went from ~E4/E7/E9/F to nearly
 # every rule enabled by default), so relying on it silently breaks CI
 # on unrelated ruff upgrades.
-select = ["E4", "E7", "E9", "F"]
+select = ["E4", "E7", "E9", "F", "I", "BLE", "S"]
