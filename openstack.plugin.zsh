@@ -6,6 +6,9 @@
 
 alias op='openstack'
 
+# --- Resolve helper script path ---
+_op_helper="${0:A:h}/op-helper.py"
+
 # --- 1. Compute & Server Aliases (Nova) ---
 alias ops='openstack server list'
 alias opsa='openstack server list --all-projects'
@@ -58,25 +61,22 @@ openv() {
     local OS_VENV="$HOME/.config/openstack/.venv"
     local target_cloud="$1"
     local selected_cloud=""
-    local preview_script="${0:A:h}/preview.py"
-    if [[ ! -f "$preview_script" ]]; then
-        preview_script="$HOME/.config/openstack/preview.py"
-    fi
 
     # 1. Select cloud FIRST (via argument or interactively through fzf)
     if [[ -n "$target_cloud" ]]; then
-        local exists=$(python3 -c "import yaml, os; print('$target_cloud' in yaml.safe_load(open(os.path.expanduser('~/.config/openstack/clouds.yaml')))['clouds'])" 2>/dev/null)
+        # Safe check using sys.argv[2] in helper script (prevents code injection)
+        local exists=$(python3 "$_op_helper" check-key "$target_cloud" 2>/dev/null)
         if [[ "$exists" == "True" ]]; then
             selected_cloud="$target_cloud"
         else
-            echo "⚠️  Cloud '$target_cloud' not found in clouds.yaml."
+            echo "⚠️  Cloud '$target_cloud' not found in clouds configuration."
             return 1
         fi
     else
-        selected_cloud=$(python3 -c "import yaml, os; print('\n'.join(yaml.safe_load(open(os.path.expanduser('~/.config/openstack/clouds.yaml')))['clouds'].keys()))" 2>/dev/null | \
+        selected_cloud=$(python3 "$_op_helper" list-keys 2>/dev/null | \
             fzf --height 60% --reverse --cycle --border rounded \
                 --prompt="󱇩 Select OpenStack Cloud: " \
-                --preview "python3 $preview_script {}" \
+                --preview "python3 '$_op_helper' preview {}" \
                 --preview-window=right:55%)
     fi
 
@@ -86,7 +86,14 @@ openv() {
         return 0
     fi
 
-    # 3. Activate venv ONLY AFTER successful cloud selection
+    # 3. Deactivate any existing non-openstack venv first to prevent PATH pollution
+    if [[ -n "$VIRTUAL_ENV" && "$VIRTUAL_ENV" != "$OS_VENV" ]]; then
+        if command -v deactivate >/dev/null 2>&1; then
+            deactivate
+        fi
+    fi
+
+    # 4. Activate OS_VENV ONLY AFTER successful cloud selection
     if [[ "$VIRTUAL_ENV" != "$OS_VENV" ]]; then
         if [[ -f "$OS_VENV/bin/activate" ]]; then
             export VIRTUAL_ENV_DISABLE_PROMPT=1
@@ -97,7 +104,7 @@ openv() {
         fi
     fi
 
-    # 4. Set OS_CLOUD environment variable
+    # 5. Set OS_CLOUD environment variable
     export OS_CLOUD="$selected_cloud"
     echo "󱇩 Active OpenStack Cloud: $OS_CLOUD"
 }
@@ -105,7 +112,7 @@ openv() {
 # --- Zsh autocompletion for openv <TAB> ---
 _openv_complete() {
     local -a clouds
-    clouds=($(python3 -c "import yaml, os; print(' '.join(yaml.safe_load(open(os.path.expanduser('~/.config/openstack/clouds.yaml')))['clouds'].keys()))" 2>/dev/null))
+    clouds=($(python3 "$_op_helper" list-keys 2>/dev/null))
     _describe 'OpenStack Cloud' clouds
 }
 compdef _openv_complete openv 2>/dev/null
@@ -132,45 +139,13 @@ opwho() {
     echo "🐍 Active Venv   : ${VIRTUAL_ENV:-None}"
     echo ""
 
-    python3 -c "
-import yaml, os
-cloud_name = os.environ.get('OS_CLOUD')
-cfg_path = os.path.expanduser('~/.config/openstack/clouds.yaml')
-try:
-    with open(cfg_path) as f:
-        data = yaml.safe_load(f)
-    cloud = data.get('clouds', {}).get(cloud_name, {})
-    auth = cloud.get('auth', {})
-    print(f'🌐 Auth URL : {auth.get(\"auth_url\", \"N/A\")}')
-    print(f'📁 Project  : {auth.get(\"project_name\", auth.get(\"project_domain_name\", \"N/A\"))}')
-    print(f'👤 User     : {auth.get(\"username\", \"AppCredential\")}')
-    print(f'📍 Region   : {cloud.get(\"region_name\", \"N/A\")}')
-except Exception as e:
-    print(f'Error reading config: {e}')
-"
+    python3 "$_op_helper" who "$OS_CLOUD" 2>/dev/null
 }
 alias opstatus='opwho'
 
 # --- List all configured OpenStack clouds ---
 opls() {
-    echo "📋 Configured OpenStack environments (~/.config/openstack/clouds.yaml):"
-    echo ""
-    python3 -c "
-import yaml, os
-cfg_path = os.path.expanduser('~/.config/openstack/clouds.yaml')
-with open(cfg_path) as f:
-    data = yaml.safe_load(f)
-
-clouds = data.get('clouds', {})
-print(f'{\"CLOUD NAME\":32s} | {\"PROJECT / ID\":28s} | {\"USER\":20s} | {\"AUTH URL\":35s}')
-print('-' * 125)
-for name, cfg in clouds.items():
-    auth = cfg.get('auth', {})
-    proj = auth.get('project_name', auth.get('application_credential_id', 'N/A'))
-    user = auth.get('username', 'AppCredential')
-    url = auth.get('auth_url', 'N/A')
-    print(f'{name:32s} | {proj:28s} | {user:20s} | {url:35s}')
-"
+    python3 "$_op_helper" list-table 2>/dev/null
 }
 alias opclouds='opls'
 
@@ -202,8 +177,12 @@ try:
         status = s.get('Status', 'N/A')
         nets = str(s.get('Networks', ''))
         ips = re.findall(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', nets)
-        ip_str = ips[-1] if ips else 'No-IP'
-        print(f'{name:32s} | {status:10s} | {ip_str}')
+        # Prioritize public/floating IP over internal RFC1918 IPs
+        best_ip = 'No-IP'
+        if ips:
+            public_ips = [ip for ip in ips if not (ip.startswith('10.') or ip.startswith('192.168.') or (ip.startswith('172.') and 16 <= int(ip.split('.')[1]) <= 31))]
+            best_ip = public_ips[0] if public_ips else ips[-1]
+        print(f'{name:32s} | {status:10s} | {best_ip}')
 except Exception as e:
     pass
 " <<< "$raw_json" | fzf --height 50% --reverse --cycle --border rounded --prompt="󰢹 Select Server to SSH (${ssh_user}@...): ")
@@ -260,6 +239,9 @@ except Exception as e:
             echo "🔗 Console URL: $console_url"
             if command -v xdg-open >/dev/null 2>&1; then
                 xdg-open "$console_url" 2>/dev/null &
+                echo "🚀 Opened console URL in browser."
+            elif command -v open >/dev/null 2>&1; then
+                open "$console_url" 2>/dev/null &
                 echo "🚀 Opened console URL in browser."
             fi
         else
