@@ -73,6 +73,7 @@ source ~/.zshrc
 | **`opls`** / `opclouds` | List all configured OpenStack clouds in `clouds.yaml` |
 | **`opcheck`** | Quick health check — verifies the active cloud's token/credentials are still valid |
 | **`ophelp`** / `openv --help` / `openv -h` | Print a categorized cheatsheet of every command and alias below |
+| **`op_prompt_info`** | Prints `☁️  [cloud]` for the active cloud — add `$(op_prompt_info)` to your `PROMPT`/`RPROMPT` for a prompt segment |
 
 ### Interactive VM Helpers
 
