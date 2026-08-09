@@ -8,6 +8,14 @@ An interactive, feature-rich **Oh My Zsh** plugin for managing **OpenStack** CLI
 
 ---
 
+## 🎬 Demo
+
+![Demo of openstack-zsh-plugin: ophelp, openv cloud picker with fzf preview, opwho, ops-ssh, opcheck](demo/demo.gif)
+
+*Recorded with [VHS](https://github.com/charmbracelet/vhs) against fake demo data — see `demo/` to regenerate it (`vhs demo/demo.tape`).*
+
+---
+
 ## ✨ Features
 
 - ⚡ **Interactive Cloud Selector (`openv`)**: Browse and activate OpenStack clouds defined in `~/.config/openstack/clouds.yaml` via `fzf` with live ANSI card preview.

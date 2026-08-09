@@ -1,0 +1,27 @@
+---
+# Fake clouds.yaml used ONLY for recording the demo GIF (demo/demo.tape).
+# None of these endpoints/credentials are real — auth_url uses the
+# RFC 5737 documentation range so it can never resolve to anything.
+clouds:
+  demo-prod:
+    auth:
+      auth_url: https://identity.example-cloud.invalid:5000/v3
+      username: demo-user
+      password: "hunter2"
+      project_name: demo-project
+    region_name: EU-WEST-1
+
+  demo-staging:
+    auth:
+      auth_url: https://identity.example-cloud.invalid:5000/v3
+      username: demo-user
+      project_name: staging-project
+    region_name: EU-WEST-1
+
+  sandbox:
+    auth_type: v3applicationcredential
+    auth:
+      auth_url: https://identity.example-cloud.invalid:5000/v3
+      application_credential_id: "1234567890abcdef1234567890abcdef"
+      application_credential_secret: "not-a-real-secret"
+    region_name: US-EAST-1
