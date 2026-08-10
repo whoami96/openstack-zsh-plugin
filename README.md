@@ -39,6 +39,45 @@ An interactive, feature-rich **Oh My Zsh** plugin for managing **OpenStack** CLI
 
 The plugin checks for `python3`, `PyYAML`, and `fzf` on load and prints a warning if any are missing.
 
+### Setting up the `openstack` venv
+
+`openv` expects a virtualenv at `~/.config/openstack/.venv` and auto-activates/deactivates
+it as you switch clouds (see `opexit`) — it doesn't create one for you. Here's the setup
+used to build/test this plugin, with [`uv`](https://docs.astral.sh/uv/):
+
+```bash
+mkdir -p ~/.config/openstack
+cd ~/.config/openstack
+uv venv .venv --python 3.12
+source .venv/bin/activate
+
+uv pip install \
+  python-openstackclient \
+  python-neutronclient \
+  python-octaviaclient \
+  python-barbicanclient \
+  python-ironicclient \
+  python-designateclient \
+  python-troveclient \
+  python-magnumclient \
+  osc-placement \
+  gnocchiclient \
+  aodhclient \
+  -c https://releases.openstack.org/constraints/upper/2025.1 \
+  --python .venv/bin/python
+```
+
+Notes:
+
+- Only `python-openstackclient` is actually required by this plugin — the rest are extra
+  per-service CLIs (Neutron, Octavia, Barbican, Ironic, Designate, Trove, Magnum,
+  Placement, Gnocchi, Aodh); add or drop whichever match the services your cloud exposes.
+- The `-c .../constraints/upper/2025.1` pins dependency versions to a known-good set for
+  that OpenStack release — swap `2025.1` for the release your cloud/clients target.
+- No `uv`? A plain `python3 -m venv .venv` followed by `pip install ...` (same package
+  list, no `-c`/`--python` flags) works just as well — `openv` only cares that
+  `~/.config/openstack/.venv/bin/activate` exists.
+
 ---
 
 ## 📦 Installation
