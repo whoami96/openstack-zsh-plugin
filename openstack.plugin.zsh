@@ -23,44 +23,126 @@ if ! command -v openstack >/dev/null 2>&1 && [[ ! -f "$HOME/.config/openstack/.v
 fi
 
 # --- 1. Compute & Server Aliases (Nova) ---
-alias ops='openstack server list'
-alias opsa='openstack server list --all-projects'
+# Pattern: op + resource + action (l=list, a=list --all-projects, s=show,
+# c=create, d=delete, e=set, r=reboot, h=stop, t=start).
+alias opsl='openstack server list'
+alias opsla='openstack server list --all-projects'
 alias opss='openstack server show'
+alias opsc='openstack server create'
+alias opsd='openstack server delete'
+alias opse='openstack server set'
 alias opsr='openstack server reboot'
 alias opsh='openstack server stop'
 alias opst='openstack server start'
-alias opsdel='openstack server delete'
-alias oplog='openstack console log show'
+alias opsg='openstack console log show'
 
 # --- 2. Networking & Security Aliases (Neutron) ---
-alias opnet='openstack network list'
-alias opsub='openstack subnet list'
-alias oprtr='openstack router list'
-alias opfip='openstack floating ip list'
-alias opip='openstack floating ip list'
-alias opsec='openstack security group list'
-alias opsecr='openstack security group rule list'
-alias opport='openstack port list'
+alias opnl='openstack network list'
+alias opns='openstack network show'
+alias opnc='openstack network create'
+alias opnd='openstack network delete'
+alias opne='openstack network set'
+
+alias opsnl='openstack subnet list'
+alias opsns='openstack subnet show'
+alias opsnc='openstack subnet create'
+alias opsnd='openstack subnet delete'
+alias opsne='openstack subnet set'
+
+alias oprtl='openstack router list'
+alias oprts='openstack router show'
+alias oprtc='openstack router create'
+alias oprtd='openstack router delete'
+alias oprte='openstack router set'
+
+alias opfil='openstack floating ip list'
+alias opfis='openstack floating ip show'
+alias opfic='openstack floating ip create'
+alias opfid='openstack floating ip delete'
+alias opfie='openstack floating ip set'
+
+alias opsgl='openstack security group list'
+alias opsgs='openstack security group show'
+alias opsgc='openstack security group create'
+alias opsgd='openstack security group delete'
+alias opsge='openstack security group set'
+
+alias opsgrl='openstack security group rule list'
+alias opsgrs='openstack security group rule show'
+alias opsgrc='openstack security group rule create'
+alias opsgrd='openstack security group rule delete'
+
+alias oppl='openstack port list'
+alias opps='openstack port show'
+alias oppc='openstack port create'
+alias oppd='openstack port delete'
+alias oppe='openstack port set'
 
 # --- 3. Storage & Image Aliases (Cinder, Swift, Glance) ---
-alias opvol='openstack volume list'
-alias opvola='openstack volume list --all-projects'
-alias opsnap='openstack volume snapshot list'
-alias opimg='openstack image list'
+alias opvl='openstack volume list'
+alias opvla='openstack volume list --all-projects'
+alias opvs='openstack volume show'
+alias opvc='openstack volume create'
+alias opvd='openstack volume delete'
+alias opve='openstack volume set'
+
+alias opvsl='openstack volume snapshot list'
+alias opvss='openstack volume snapshot show'
+alias opvsc='openstack volume snapshot create'
+alias opvsd='openstack volume snapshot delete'
+alias opvse='openstack volume snapshot set'
+
+alias opil='openstack image list'
+alias opis='openstack image show'
+alias opic='openstack image create'
+alias opid='openstack image delete'
+alias opie='openstack image set'
 
 # --- 4. Identity & Quota Aliases (Keystone) ---
-alias opproj='openstack project list'
-alias opuser='openstack user list'
-alias oprole='openstack role list'
-alias optoken='openstack token issue'
-alias opfl='openstack flavor list'
-alias opkey='openstack keypair list'
-alias oplim='openstack limits show --absolute'
+alias opprl='openstack project list'
+alias opprs='openstack project show'
+alias opprc='openstack project create'
+alias opprd='openstack project delete'
+alias oppre='openstack project set'
+
+alias opul='openstack user list'
+alias opus='openstack user show'
+alias opuc='openstack user create'
+alias opud='openstack user delete'
+alias opue='openstack user set'
+
+alias oprol='openstack role list'
+alias opros='openstack role show'
+alias oproc='openstack role create'
+alias oprod='openstack role delete'
+
+alias optks='openstack token issue'
+
+alias opfll='openstack flavor list'
+alias opfls='openstack flavor show'
+alias opflc='openstack flavor create'
+alias opfld='openstack flavor delete'
+
+alias opkpl='openstack keypair list'
+alias opkps='openstack keypair show'
+alias opkpc='openstack keypair create'
+alias opkpd='openstack keypair delete'
+
+alias oplims='openstack limits show --absolute'
+alias opqs='openstack quota show'
+alias opqe='openstack quota set'
 
 # --- 5. Load Balancers & Kubernetes (Octavia & Magnum) ---
-alias oplb='openstack loadbalancer list'
-alias opk8s='openstack coe cluster list'
-alias opcoe='openstack coe cluster list'
+alias oplbl='openstack loadbalancer list'
+alias oplbs='openstack loadbalancer show'
+alias oplbc='openstack loadbalancer create'
+alias oplbd='openstack loadbalancer delete'
+alias oplbe='openstack loadbalancer set'
+
+alias opk8sl='openstack coe cluster list'
+alias opk8ss='openstack coe cluster show'
+alias opk8sc='openstack coe cluster create'
+alias opk8sd='openstack coe cluster delete'
 
 # --- 6. Prompt Helper for Zsh themes ---
 # Usage: add $(op_prompt_info) to your PROMPT/RPROMPT to show the active cloud.
@@ -106,46 +188,113 @@ ophelp() {
 
     echo
     echo "  ${MAGENTA}Compute (Nova)${RESET}"
-    _ophelp_row "ops"    "openstack server list"
-    _ophelp_row "opsa"   "openstack server list --all-projects"
-    _ophelp_row "opss"   "openstack server show"
-    _ophelp_row "opsr"   "openstack server reboot"
-    _ophelp_row "opsh"   "openstack server stop"
-    _ophelp_row "opst"   "openstack server start"
-    _ophelp_row "opsdel" "openstack server delete"
-    _ophelp_row "oplog"  "openstack console log show"
+    _ophelp_row "opsl"  "openstack server list"
+    _ophelp_row "opsla" "openstack server list --all-projects"
+    _ophelp_row "opss"  "openstack server show"
+    _ophelp_row "opsc"  "openstack server create"
+    _ophelp_row "opsd"  "openstack server delete"
+    _ophelp_row "opse"  "openstack server set"
+    _ophelp_row "opsr"  "openstack server reboot"
+    _ophelp_row "opsh"  "openstack server stop"
+    _ophelp_row "opst"  "openstack server start"
+    _ophelp_row "opsg"  "openstack console log show"
 
     echo
     echo "  ${MAGENTA}Networking & Security (Neutron)${RESET}"
-    _ophelp_row "opnet"       "openstack network list"
-    _ophelp_row "opsub"       "openstack subnet list"
-    _ophelp_row "oprtr"       "openstack router list"
-    _ophelp_row "opfip, opip" "openstack floating ip list"
-    _ophelp_row "opsec"       "openstack security group list"
-    _ophelp_row "opsecr"      "openstack security group rule list"
-    _ophelp_row "opport"      "openstack port list"
+    _ophelp_row "opnl"   "openstack network list"
+    _ophelp_row "opns"   "openstack network show"
+    _ophelp_row "opnc"   "openstack network create"
+    _ophelp_row "opnd"   "openstack network delete"
+    _ophelp_row "opne"   "openstack network set"
+    _ophelp_row "opsnl"  "openstack subnet list"
+    _ophelp_row "opsns"  "openstack subnet show"
+    _ophelp_row "opsnc"  "openstack subnet create"
+    _ophelp_row "opsnd"  "openstack subnet delete"
+    _ophelp_row "opsne"  "openstack subnet set"
+    _ophelp_row "oprtl"  "openstack router list"
+    _ophelp_row "oprts"  "openstack router show"
+    _ophelp_row "oprtc"  "openstack router create"
+    _ophelp_row "oprtd"  "openstack router delete"
+    _ophelp_row "oprte"  "openstack router set"
+    _ophelp_row "opfil"  "openstack floating ip list"
+    _ophelp_row "opfis"  "openstack floating ip show"
+    _ophelp_row "opfic"  "openstack floating ip create"
+    _ophelp_row "opfid"  "openstack floating ip delete"
+    _ophelp_row "opfie"  "openstack floating ip set"
+    _ophelp_row "opsgl"  "openstack security group list"
+    _ophelp_row "opsgs"  "openstack security group show"
+    _ophelp_row "opsgc"  "openstack security group create"
+    _ophelp_row "opsgd"  "openstack security group delete"
+    _ophelp_row "opsge"  "openstack security group set"
+    _ophelp_row "opsgrl" "openstack security group rule list"
+    _ophelp_row "opsgrs" "openstack security group rule show"
+    _ophelp_row "opsgrc" "openstack security group rule create"
+    _ophelp_row "opsgrd" "openstack security group rule delete"
+    _ophelp_row "oppl"   "openstack port list"
+    _ophelp_row "opps"   "openstack port show"
+    _ophelp_row "oppc"   "openstack port create"
+    _ophelp_row "oppd"   "openstack port delete"
+    _ophelp_row "oppe"   "openstack port set"
 
     echo
     echo "  ${MAGENTA}Storage & Images (Cinder / Glance)${RESET}"
-    _ophelp_row "opvol"  "openstack volume list"
-    _ophelp_row "opvola" "openstack volume list --all-projects"
-    _ophelp_row "opsnap" "openstack volume snapshot list"
-    _ophelp_row "opimg"  "openstack image list"
+    _ophelp_row "opvl"  "openstack volume list"
+    _ophelp_row "opvla" "openstack volume list --all-projects"
+    _ophelp_row "opvs"  "openstack volume show"
+    _ophelp_row "opvc"  "openstack volume create"
+    _ophelp_row "opvd"  "openstack volume delete"
+    _ophelp_row "opve"  "openstack volume set"
+    _ophelp_row "opvsl" "openstack volume snapshot list"
+    _ophelp_row "opvss" "openstack volume snapshot show"
+    _ophelp_row "opvsc" "openstack volume snapshot create"
+    _ophelp_row "opvsd" "openstack volume snapshot delete"
+    _ophelp_row "opvse" "openstack volume snapshot set"
+    _ophelp_row "opil"  "openstack image list"
+    _ophelp_row "opis"  "openstack image show"
+    _ophelp_row "opic"  "openstack image create"
+    _ophelp_row "opid"  "openstack image delete"
+    _ophelp_row "opie"  "openstack image set"
 
     echo
     echo "  ${MAGENTA}Identity & Quotas (Keystone)${RESET}"
-    _ophelp_row "opproj"  "openstack project list"
-    _ophelp_row "opuser"  "openstack user list"
-    _ophelp_row "oprole"  "openstack role list"
-    _ophelp_row "optoken" "openstack token issue"
-    _ophelp_row "opfl"    "openstack flavor list"
-    _ophelp_row "opkey"   "openstack keypair list"
-    _ophelp_row "oplim"   "openstack limits show --absolute"
+    _ophelp_row "opprl"  "openstack project list"
+    _ophelp_row "opprs"  "openstack project show"
+    _ophelp_row "opprc"  "openstack project create"
+    _ophelp_row "opprd"  "openstack project delete"
+    _ophelp_row "oppre"  "openstack project set"
+    _ophelp_row "opul"   "openstack user list"
+    _ophelp_row "opus"   "openstack user show"
+    _ophelp_row "opuc"   "openstack user create"
+    _ophelp_row "opud"   "openstack user delete"
+    _ophelp_row "opue"   "openstack user set"
+    _ophelp_row "oprol"  "openstack role list"
+    _ophelp_row "opros"  "openstack role show"
+    _ophelp_row "oproc"  "openstack role create"
+    _ophelp_row "oprod"  "openstack role delete"
+    _ophelp_row "optks"  "openstack token issue"
+    _ophelp_row "opfll"  "openstack flavor list"
+    _ophelp_row "opfls"  "openstack flavor show"
+    _ophelp_row "opflc"  "openstack flavor create"
+    _ophelp_row "opfld"  "openstack flavor delete"
+    _ophelp_row "opkpl"  "openstack keypair list"
+    _ophelp_row "opkps"  "openstack keypair show"
+    _ophelp_row "opkpc"  "openstack keypair create"
+    _ophelp_row "opkpd"  "openstack keypair delete"
+    _ophelp_row "oplims" "openstack limits show --absolute"
+    _ophelp_row "opqs"   "openstack quota show"
+    _ophelp_row "opqe"   "openstack quota set"
 
     echo
     echo "  ${MAGENTA}Load Balancers & Kubernetes (Octavia & Magnum)${RESET}"
-    _ophelp_row "oplb"         "openstack loadbalancer list"
-    _ophelp_row "opk8s, opcoe" "openstack coe cluster list"
+    _ophelp_row "oplbl"  "openstack loadbalancer list"
+    _ophelp_row "oplbs"  "openstack loadbalancer show"
+    _ophelp_row "oplbc"  "openstack loadbalancer create"
+    _ophelp_row "oplbd"  "openstack loadbalancer delete"
+    _ophelp_row "oplbe"  "openstack loadbalancer set"
+    _ophelp_row "opk8sl" "openstack coe cluster list"
+    _ophelp_row "opk8ss" "openstack coe cluster show"
+    _ophelp_row "opk8sc" "openstack coe cluster create"
+    _ophelp_row "opk8sd" "openstack coe cluster delete"
 
     echo
     echo "${DIM}Full docs: README.md${RESET}"

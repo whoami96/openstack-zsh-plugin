@@ -24,7 +24,7 @@ An interactive, feature-rich **Oh My Zsh** plugin for managing **OpenStack** CLI
 - 🚀 **Interactive SSH (`ops-ssh`)**: Select OpenStack VMs interactively with `fzf` and SSH straight into them.
 - 🌐 **VNC Console Launcher (`ops-console`)**: Generate VNC console URLs and open them directly in your browser.
 - 📊 **Status & Summary (`opwho`, `opls`)**: Display active cloud connection status or list all configured clouds in a clean ASCII table.
-- 🛠️ **Comprehensive Aliases**: Over 20+ short aliases for Nova, Neutron, Cinder, Keystone, Glance, Octavia, and Magnum.
+- 🛠️ **Comprehensive Aliases**: 100 short aliases for Nova, Neutron, Cinder, Keystone, Glance, Octavia, and Magnum, following a consistent `op` + resource + action pattern.
 
 ---
 
@@ -133,43 +133,117 @@ source ~/.zshrc
 
 - `op` $\rightarrow$ `openstack`
 
+Naming pattern: `op` + resource + action, where the action letter is
+`l`=list, `a`=list --all-projects, `s`=show, `c`=create, `d`=delete,
+`e`=set, `r`=reboot, `h`=stop, `t`=start. Not every resource supports
+every action (e.g. roles/flavors/keypairs have no `set`, security group
+rules have no `set`, quota only has show/set) — only real `openstack`
+subcommands are aliased.
+
 #### Compute (Nova)
-- `ops` $\rightarrow$ `openstack server list`
-- `opsa` $\rightarrow$ `openstack server list --all-projects`
+- `opsl` $\rightarrow$ `openstack server list`
+- `opsla` $\rightarrow$ `openstack server list --all-projects`
 - `opss` $\rightarrow$ `openstack server show`
+- `opsc` $\rightarrow$ `openstack server create`
+- `opsd` $\rightarrow$ `openstack server delete`
+- `opse` $\rightarrow$ `openstack server set`
 - `opsr` $\rightarrow$ `openstack server reboot`
 - `opsh` $\rightarrow$ `openstack server stop`
 - `opst` $\rightarrow$ `openstack server start`
-- `opsdel` $\rightarrow$ `openstack server delete`
-- `oplog` $\rightarrow$ `openstack console log show`
+- `opsg` $\rightarrow$ `openstack console log show`
 
 #### Networking & Security (Neutron)
-- `opnet` $\rightarrow$ `openstack network list`
-- `opsub` $\rightarrow$ `openstack subnet list`
-- `oprtr` $\rightarrow$ `openstack router list`
-- `opfip` / `opip` $\rightarrow$ `openstack floating ip list`
-- `opsec` $\rightarrow$ `openstack security group list`
-- `opsecr` $\rightarrow$ `openstack security group rule list`
-- `opport` $\rightarrow$ `openstack port list`
+- `opnl` $\rightarrow$ `openstack network list`
+- `opns` $\rightarrow$ `openstack network show`
+- `opnc` $\rightarrow$ `openstack network create`
+- `opnd` $\rightarrow$ `openstack network delete`
+- `opne` $\rightarrow$ `openstack network set`
+- `opsnl` $\rightarrow$ `openstack subnet list`
+- `opsns` $\rightarrow$ `openstack subnet show`
+- `opsnc` $\rightarrow$ `openstack subnet create`
+- `opsnd` $\rightarrow$ `openstack subnet delete`
+- `opsne` $\rightarrow$ `openstack subnet set`
+- `oprtl` $\rightarrow$ `openstack router list`
+- `oprts` $\rightarrow$ `openstack router show`
+- `oprtc` $\rightarrow$ `openstack router create`
+- `oprtd` $\rightarrow$ `openstack router delete`
+- `oprte` $\rightarrow$ `openstack router set`
+- `opfil` $\rightarrow$ `openstack floating ip list`
+- `opfis` $\rightarrow$ `openstack floating ip show`
+- `opfic` $\rightarrow$ `openstack floating ip create`
+- `opfid` $\rightarrow$ `openstack floating ip delete`
+- `opfie` $\rightarrow$ `openstack floating ip set`
+- `opsgl` $\rightarrow$ `openstack security group list`
+- `opsgs` $\rightarrow$ `openstack security group show`
+- `opsgc` $\rightarrow$ `openstack security group create`
+- `opsgd` $\rightarrow$ `openstack security group delete`
+- `opsge` $\rightarrow$ `openstack security group set`
+- `opsgrl` $\rightarrow$ `openstack security group rule list`
+- `opsgrs` $\rightarrow$ `openstack security group rule show`
+- `opsgrc` $\rightarrow$ `openstack security group rule create`
+- `opsgrd` $\rightarrow$ `openstack security group rule delete`
+- `oppl` $\rightarrow$ `openstack port list`
+- `opps` $\rightarrow$ `openstack port show`
+- `oppc` $\rightarrow$ `openstack port create`
+- `oppd` $\rightarrow$ `openstack port delete`
+- `oppe` $\rightarrow$ `openstack port set`
 
 #### Storage & Images (Cinder / Glance)
-- `opvol` $\rightarrow$ `openstack volume list`
-- `opvola` $\rightarrow$ `openstack volume list --all-projects`
-- `opsnap` $\rightarrow$ `openstack volume snapshot list`
-- `opimg` $\rightarrow$ `openstack image list`
+- `opvl` $\rightarrow$ `openstack volume list`
+- `opvla` $\rightarrow$ `openstack volume list --all-projects`
+- `opvs` $\rightarrow$ `openstack volume show`
+- `opvc` $\rightarrow$ `openstack volume create`
+- `opvd` $\rightarrow$ `openstack volume delete`
+- `opve` $\rightarrow$ `openstack volume set`
+- `opvsl` $\rightarrow$ `openstack volume snapshot list`
+- `opvss` $\rightarrow$ `openstack volume snapshot show`
+- `opvsc` $\rightarrow$ `openstack volume snapshot create`
+- `opvsd` $\rightarrow$ `openstack volume snapshot delete`
+- `opvse` $\rightarrow$ `openstack volume snapshot set`
+- `opil` $\rightarrow$ `openstack image list`
+- `opis` $\rightarrow$ `openstack image show`
+- `opic` $\rightarrow$ `openstack image create`
+- `opid` $\rightarrow$ `openstack image delete`
+- `opie` $\rightarrow$ `openstack image set`
 
 #### Identity & Quotas (Keystone)
-- `opproj` $\rightarrow$ `openstack project list`
-- `opuser` $\rightarrow$ `openstack user list`
-- `oprole` $\rightarrow$ `openstack role list`
-- `optoken` $\rightarrow$ `openstack token issue`
-- `opfl` $\rightarrow$ `openstack flavor list`
-- `opkey` $\rightarrow$ `openstack keypair list`
-- `oplim` $\rightarrow$ `openstack limits show --absolute`
+- `opprl` $\rightarrow$ `openstack project list`
+- `opprs` $\rightarrow$ `openstack project show`
+- `opprc` $\rightarrow$ `openstack project create`
+- `opprd` $\rightarrow$ `openstack project delete`
+- `oppre` $\rightarrow$ `openstack project set`
+- `opul` $\rightarrow$ `openstack user list`
+- `opus` $\rightarrow$ `openstack user show`
+- `opuc` $\rightarrow$ `openstack user create`
+- `opud` $\rightarrow$ `openstack user delete`
+- `opue` $\rightarrow$ `openstack user set`
+- `oprol` $\rightarrow$ `openstack role list`
+- `opros` $\rightarrow$ `openstack role show`
+- `oproc` $\rightarrow$ `openstack role create`
+- `oprod` $\rightarrow$ `openstack role delete`
+- `optks` $\rightarrow$ `openstack token issue`
+- `opfll` $\rightarrow$ `openstack flavor list`
+- `opfls` $\rightarrow$ `openstack flavor show`
+- `opflc` $\rightarrow$ `openstack flavor create`
+- `opfld` $\rightarrow$ `openstack flavor delete`
+- `opkpl` $\rightarrow$ `openstack keypair list`
+- `opkps` $\rightarrow$ `openstack keypair show`
+- `opkpc` $\rightarrow$ `openstack keypair create`
+- `opkpd` $\rightarrow$ `openstack keypair delete`
+- `oplims` $\rightarrow$ `openstack limits show --absolute`
+- `opqs` $\rightarrow$ `openstack quota show`
+- `opqe` $\rightarrow$ `openstack quota set`
 
 #### Load Balancers & Kubernetes (Octavia & Magnum)
-- `oplb` $\rightarrow$ `openstack loadbalancer list`
-- `opk8s` / `opcoe` $\rightarrow$ `openstack coe cluster list`
+- `oplbl` $\rightarrow$ `openstack loadbalancer list`
+- `oplbs` $\rightarrow$ `openstack loadbalancer show`
+- `oplbc` $\rightarrow$ `openstack loadbalancer create`
+- `oplbd` $\rightarrow$ `openstack loadbalancer delete`
+- `oplbe` $\rightarrow$ `openstack loadbalancer set`
+- `opk8sl` $\rightarrow$ `openstack coe cluster list`
+- `opk8ss` $\rightarrow$ `openstack coe cluster show`
+- `opk8sc` $\rightarrow$ `openstack coe cluster create`
+- `opk8sd` $\rightarrow$ `openstack coe cluster delete`
 
 ---
 
