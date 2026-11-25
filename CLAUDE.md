@@ -42,7 +42,8 @@ MIT licensed.
   `README.md`.
 - `op-helper.py` caches the parsed `clouds.yaml` at
   `${XDG_CACHE_HOME:-~/.cache}/openstack-zsh-plugin/clouds_cache.json`,
-  keyed by `(source path, mtime)`. It's written with `0600` perms in a
+  keyed by the paths and mtimes of `clouds.yaml` and `secure.yaml` (both are
+  merged, `secure.yaml` wins per field, like openstacksdk). It's written with `0600` perms in a
   `0700` dir because `clouds.yaml` can contain plaintext passwords —
   don't loosen that when touching the cache code.
 - The dependency check at the top of the `.zsh` file only warns about a

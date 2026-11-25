@@ -18,7 +18,7 @@ An interactive, feature-rich **Oh My Zsh** plugin for managing **OpenStack** CLI
 
 ## ✨ Features
 
-- ⚡ **Interactive Cloud Selector (`openv`)**: Browse and activate OpenStack clouds defined in `~/.config/openstack/clouds.yaml` via `fzf` with live ANSI card preview.
+- ⚡ **Interactive Cloud Selector (`openv`)**: Browse and activate OpenStack clouds defined in `~/.config/openstack/clouds.yaml` (plus `secure.yaml`, merged like openstacksdk does) via `fzf` with live ANSI card preview.
 - 🔒 **No Secrets in Preview**: The `fzf` preview card only ever reads and prints non-sensitive fields (auth URL, project, username, region) — it never touches `password` or secret fields from `clouds.yaml`.
 - 🎯 **Tab Completion**: Auto-completes `openv <cloud_name>` directly in your shell.
 - 🚀 **Interactive SSH (`ops-ssh`)**: Select OpenStack VMs interactively with `fzf` and SSH straight into them.
@@ -33,7 +33,7 @@ An interactive, feature-rich **Oh My Zsh** plugin for managing **OpenStack** CLI
 - **zsh** with [Oh My Zsh](https://ohmyz.sh/)
 - **python3** with the [`PyYAML`](https://pypi.org/project/PyYAML/) package installed (`pip install pyyaml`)
 - **[fzf](https://github.com/junegunn/fzf)** for the interactive selectors (`openv`, `ops-ssh`, `ops-console`)
-- **[python-openstackclient](https://docs.openstack.org/python-openstackclient/)** (the `openstack` CLI) configured with a `clouds.yaml` (default: `~/.config/openstack/clouds.yaml`, or set `OS_CLIENT_CONFIG_FILE`)
+- **[python-openstackclient](https://docs.openstack.org/python-openstackclient/)** (the `openstack` CLI) configured with a `clouds.yaml` (default: `~/.config/openstack/clouds.yaml`, or set `OS_CLIENT_CONFIG_FILE`); an optional `secure.yaml` next to it (or `OS_CLIENT_SECURE_FILE`) is merged in, same-name clouds overridden field by field
 - **ssh** on `PATH` for `ops-ssh`
 - A **[Nerd Font](https://www.nerdfonts.com/)** in your terminal — several icons in the output (`󱇩`, `󰢹`, `󱄊`, ...) are Nerd Font glyphs and render as boxes/question marks without one
 

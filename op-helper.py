@@ -15,24 +15,31 @@ XDG_CACHE_HOME = os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cach
 CACHE_DIR = os.path.join(XDG_CACHE_HOME, "openstack-zsh-plugin")
 CACHE_FILE = os.path.join(CACHE_DIR, "clouds_cache.json")
 
-def get_config_path():
-    """Resolves OpenStack clouds.yaml path following standard precedence."""
-    env_path = os.environ.get("OS_CLIENT_CONFIG_FILE")
+def _find(env_var, name):
+    """Resolves an openstacksdk config file: env var, then ./, ~/.config/openstack/, /etc/openstack/."""
+    env_path = os.environ.get(env_var)
     if env_path and os.path.isfile(env_path):
         return env_path
-
-    candidates = [
-        "./clouds.yaml",
-        os.path.expanduser("~/.config/openstack/clouds.yaml"),
-        "/etc/openstack/clouds.yaml"
-    ]
-    for path in candidates:
+    for d in (".", os.path.expanduser("~/.config/openstack"), "/etc/openstack"):
+        path = os.path.join(d, name)
         if os.path.isfile(path):
             return path
-    return os.path.expanduser("~/.config/openstack/clouds.yaml")
+    return None
+
+def get_config_paths():
+    """clouds.yaml plus secure.yaml, the two files openstacksdk merges (secure.yaml wins)."""
+    return [p for p in (_find("OS_CLIENT_CONFIG_FILE", "clouds.yaml"),
+                        _find("OS_CLIENT_SECURE_FILE", "secure.yaml")) if p]
+
+def _merge(base, over):
+    """Deep merge like openstacksdk: a same-name cloud in secure.yaml overrides field by field."""
+    out = dict(base)
+    for k, v in over.items():
+        out[k] = _merge(out[k], v) if isinstance(v, dict) and isinstance(out.get(k), dict) else v
+    return out
 
 def _read_cache(path, mtime):
-    """Returns cached clouds dict if the cache matches the source file's path+mtime."""
+    """Returns cached clouds dict if the cache matches the source files' paths+mtimes."""
     try:
         with open(CACHE_FILE) as f:
             cache = json.load(f)
@@ -58,25 +65,26 @@ def _write_cache(path, mtime, clouds):
         pass  # noqa: S110
 
 def load_clouds():
-    """Loads and parses OpenStack clouds configuration, cached by source mtime."""
-    path = get_config_path()
-    if not os.path.isfile(path):
+    """Loads clouds.yaml + secure.yaml, cached by the files' paths and mtimes."""
+    paths = get_config_paths()
+    if not paths:
         return {}
 
-    mtime = os.path.getmtime(path)
-    cached = _read_cache(path, mtime)
+    mtimes = [os.path.getmtime(p) for p in paths]
+    cached = _read_cache(paths, mtimes)
     if cached is not None:
         return cached
 
-    try:
-        with open(path) as f:
-            data = yaml.safe_load(f)
-        clouds = data.get("clouds", {})
-    except (OSError, yaml.YAMLError) as e:
-        print(f"⚠️  Failed to read {path}: {e}", file=sys.stderr)
-        return {}
+    clouds = {}
+    for path in paths:
+        try:
+            with open(path) as f:
+                data = yaml.safe_load(f) or {}
+            clouds = _merge(clouds, data.get("clouds") or {})
+        except (OSError, yaml.YAMLError) as e:
+            print(f"⚠️  Failed to read {path}: {e}", file=sys.stderr)
 
-    _write_cache(path, mtime, clouds)
+    _write_cache(paths, mtimes, clouds)
     return clouds
 
 def main():
@@ -142,8 +150,8 @@ def main():
         print(f"📍 Region   : {cloud.get('region_name', 'N/A')}")
 
     elif cmd == "list-table":
-        path = get_config_path()
-        print(f"📋 Configured OpenStack environments ({path}):\n")
+        paths = " + ".join(get_config_paths()) or "no clouds.yaml"
+        print(f"📋 Configured OpenStack environments ({paths}):\n")
         print(f"{'CLOUD NAME':32s} | {'PROJECT / ID':28s} | {'USER':20s} | {'AUTH URL':35s}")
         print("-" * 125)
         for name, cfg in clouds.items():
